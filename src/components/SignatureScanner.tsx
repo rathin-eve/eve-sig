@@ -423,7 +423,9 @@ export function SignatureScanner() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center">
-                    No signatures to display.
+                    {signatures?.length > 0
+                      ? "No new signatures." : "No signatures to display."}
+                    
                   </TableCell>
                 </TableRow>
               )}
