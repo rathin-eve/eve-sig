@@ -464,6 +464,16 @@ export function SignatureScanner() {
                 </TableRow>
               )}
             </TableBody>
+            {knownSignatures && Object.keys(knownSignatures).length > 0 && (
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                  {displaySignatures.length > 0 ? 
+                  `${displaySignatures.length} signature(s) displayed.` : ''} {knownSignatures ? Object.keys(knownSignatures).length : 0} known signature(s) in total.
+                </TableCell>
+              </TableRow>
+            </TableFooter>
+            )}
           </Table>
         </CardContent>
       </Card>
