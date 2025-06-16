@@ -99,10 +99,7 @@ export function SignatureScanner() {
   );
   const [favouritedIds, setFavouritedIds] = useState<Set<string>>(new Set());
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
-  const [sortConfig, setSortConfig] = useState<SortConfig>({
-    key: "id",
-    direction: "ascending",
-  });
+  const [sortConfig, setSortConfig] = useState<SortConfig>();
 
   useEffect(() => {
     const now = Date.now();
@@ -135,17 +132,24 @@ export function SignatureScanner() {
 
   const requestSort = (key: SortKey) => {
     let direction: "ascending" | "descending" = "ascending";
-    if (sortConfig.key === key && sortConfig.direction === "ascending") {
+    if (sortConfig?.key === key && sortConfig?.direction === "descending") {
+      setSortConfig(undefined);
+      return; // Reset sort if already sorted by this key in descending order
+    } else if (
+      sortConfig?.key === key &&
+      sortConfig?.direction === "ascending"
+    ) {
       direction = "descending";
     }
+
     setSortConfig({ key, direction });
   };
 
   const getSortIndicator = (key: SortKey) => {
-    if (sortConfig.key !== key) {
+    if (sortConfig?.key !== key) {
       return <ArrowUpDown className="ml-2 h-3 w-3 opacity-50" />;
     }
-    return sortConfig.direction === "ascending" ? (
+    return sortConfig?.direction === "ascending" ? (
       <span className="ml-1">▲</span>
     ) : (
       <span className="ml-1">▼</span>
@@ -242,7 +246,7 @@ export function SignatureScanner() {
   const displaySignatures = useMemo(() => {
     const sortableItems = [...signatures];
 
-    if (sortConfig.key !== null) {
+    if (!!sortConfig && sortConfig.key) {
       const getSortValue = (item: Signature, key: SortKey) => {
         switch (key) {
           case "id":
@@ -331,23 +335,53 @@ export function SignatureScanner() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px] cursor-pointer hover:bg-muted/50" onClick={() => requestSort('id')}>
-                  <div className="flex items-center">ID {getSortIndicator('id')}</div>
+                <TableHead
+                  className="w-[100px] cursor-pointer hover:bg-muted/50"
+                  onClick={() => requestSort("id")}
+                >
+                  <div className="flex items-center">
+                    ID {getSortIndicator("id")}
+                  </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('status')}>
-                  <div className="flex items-center">Status {getSortIndicator('status')}</div>
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => requestSort("status")}
+                >
+                  <div className="flex items-center">
+                    Status {getSortIndicator("status")}
+                  </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('type')}>
-                  <div className="flex items-center">Type {getSortIndicator('type')}</div>
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => requestSort("type")}
+                >
+                  <div className="flex items-center">
+                    Type {getSortIndicator("type")}
+                  </div>
                 </TableHead>
-                <TableHead className="cursor-pointer hover:bg-muted/50" onClick={() => requestSort('name')}>
-                  <div className="flex items-center">Name {getSortIndicator('name')}</div>
+                <TableHead
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => requestSort("name")}
+                >
+                  <div className="flex items-center">
+                    Name {getSortIndicator("name")}
+                  </div>
                 </TableHead>
-                <TableHead className="w-[120px] cursor-pointer hover:bg-muted/50" onClick={() => requestSort('signal')}>
-                  <div className="flex items-center">Signal {getSortIndicator('signal')}</div>
+                <TableHead
+                  className="w-[120px] cursor-pointer hover:bg-muted/50"
+                  onClick={() => requestSort("signal")}
+                >
+                  <div className="flex items-center">
+                    Signal {getSortIndicator("signal")}
+                  </div>
                 </TableHead>
-                <TableHead className="text-right cursor-pointer hover:bg-muted/50" onClick={() => requestSort('distance')}>
-                  <div className="flex items-center justify-end">Distance {getSortIndicator('distance')}</div>
+                <TableHead
+                  className="text-right cursor-pointer hover:bg-muted/50"
+                  onClick={() => requestSort("distance")}
+                >
+                  <div className="flex items-center justify-end">
+                    Distance {getSortIndicator("distance")}
+                  </div>
                 </TableHead>
                 <TableHead className="text-center w-[140px]">Actions</TableHead>
               </TableRow>
@@ -424,8 +458,8 @@ export function SignatureScanner() {
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center">
                     {signatures?.length > 0
-                      ? "No new signatures." : "No signatures to display."}
-                    
+                      ? "No new signatures."
+                      : "No signatures to display."}
                   </TableCell>
                 </TableRow>
               )}
