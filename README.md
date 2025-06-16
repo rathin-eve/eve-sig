@@ -19,14 +19,15 @@ This is a web-based tool designed for EVE Online players to help manage cosmic s
 
 1.  **Copy Scan Results**: In EVE Online, open the Probe Scanner window (ALT+P). Select all signature results (CTRL+A) and copy them (CTRL+C).
 2.  **Paste into Tool**: Paste the copied data into the text area provided in the Signature Scanner tool.
-3.  **Process Signatures**: Click the "Process Signatures" button. The tool will parse the data and display it in the table below.
-4.  **Manage Signatures**:
+3.  **Check Signatures**: Click the "Process Signatures" button. The tool will parse the data and display it in the table below.
+4.  **Refresh Signatures**: If you want to refresh the signatures without considering the current known state, click the "Refresh Signatures" button (the circular arrow icon). This will re-parse the input text and update the display.
+5.  **Manage Signatures**:
     *   Use the star icon to toggle a signature as a favourite.
     *   Use the eye-off icon to toggle a signature as ignored (it will be greyed out and struck through).
     *   Use the trash icon to remove a signature from the current view.
     *   Toggle the "Show Only Unknown" switch to filter the list.
-5.  **Data Persistence**: Your known, favourited, and ignored signatures will be remembered the next time you use the tool in the same browser. Known signatures expire after 3 days.
-6.  **Delete All Data**: Click the "Delete All" button to clear all signatures from the display and remove all data from local storage.
+6.  **Data Persistence**: Your known, favourited, and ignored signatures will be remembered the next time you use the tool in the same browser. Known signatures expire after 3 days.
+7.  **Delete All Data**: Click the "Delete All" button to clear all signatures from the display and remove all data from local storage.
 
 ## Tech Stack
 
