@@ -14,10 +14,6 @@ function App() {
       <SignatureScanner />
 
       <div className="w-full max-w-5xl mx-auto text-left mt-4">
-        <h2 className="text-lg font-bold">EVE Online Signature Scanner</h2>
-        <p className="text-sm text-gray-600">
-          This tool helps you re-scan and analyze signatures in EVE Online. Enter your signature data to get started.
-        </p>
         <div className="mt-6">
           <h3 className="text-md font-semibold mb-2">How to Use</h3>
           <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 dark:text-gray-300">

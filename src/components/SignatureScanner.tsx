@@ -299,7 +299,7 @@ export function SignatureScanner() {
         <CardHeader>
           <CardTitle>EVE Online Signature Scanner</CardTitle>
           <CardDescription>
-            Paste scan results, mark favourites, and ignore distractions. Data
+            Paste scan results and indicate those that are new, mark favourites, and ignore distractions. Data
             is saved in your browser.
           </CardDescription>
         </CardHeader>
