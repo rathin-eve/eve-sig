@@ -5,7 +5,7 @@ import { defineConfig } from "vite"
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/eve-sig/",
+  base: "./",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
