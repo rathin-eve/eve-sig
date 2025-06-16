@@ -230,6 +230,30 @@ export function SignatureScanner() {
 
   const removeSignature = (id: string) => {
     setSignatures((prev) => prev.filter((s) => s.id !== id));
+    setKnownSignatures((prev) => {
+      const newKnown = { ...prev };
+      delete newKnown[id];
+      localStorage.setItem(KNOWN_SIGNATURES_KEY, JSON.stringify(newKnown));
+      return newKnown;
+    });
+    setFavouritedIds((prev) => {
+      const newFavourites = new Set(prev);
+      newFavourites.delete(id);
+      localStorage.setItem(
+        FAVOURITED_SIGNATURES_KEY,
+        JSON.stringify(Array.from(newFavourites))
+      );
+      return newFavourites;
+    });
+    setIgnoredIds((prev) => {
+      const newIgnored = new Set(prev);
+      newIgnored.delete(id);
+      localStorage.setItem(
+        IGNORED_SIGNATURES_KEY,
+        JSON.stringify(Array.from(newIgnored))
+      );
+      return newIgnored;
+    });
   };
 
   const handleReset = () => {
@@ -238,9 +262,12 @@ export function SignatureScanner() {
     setKnownSignatures({});
     setFavouritedIds(new Set());
     setIgnoredIds(new Set());
+    setShowOnlyUnknown(false); 
+    setSortConfig(undefined); 
     localStorage.removeItem(KNOWN_SIGNATURES_KEY);
     localStorage.removeItem(FAVOURITED_SIGNATURES_KEY);
     localStorage.removeItem(IGNORED_SIGNATURES_KEY);
+    localStorage.removeItem(SHOW_ONLY_UNKNOWN_KEY);
   };
 
   const displaySignatures = useMemo(() => {
