@@ -3,7 +3,6 @@ import { ThemeProvider } from './components/theme-provider'
 import { ModeToggle } from './components/mode-toggle'
 import { SignatureScanner } from './components/SignatureScanner'
 import { EyeOff, Star, Trash2 } from 'lucide-react'
-import { cn } from './lib/utils'
 
 function App() {
 
