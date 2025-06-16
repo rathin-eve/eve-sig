@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Star, EyeOff, Trash2, ArrowUpDown } from "lucide-react";
+import { Star, EyeOff, Trash2, ArrowUpDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -36,13 +37,29 @@ interface Signature {
   name: string;
   signal: string;
   distance: string;
-  signalStrength: number;
+  signalStrength: number; // Parsed signal strength
   isKnown: boolean;
   isFavourited: boolean;
   isIgnored: boolean;
 }
 
-type KnownSignatureStore = { [id: string]: number };
+// core data stored in knownSignatures
+interface StoredSignatureData {
+  id: string;
+  type: string;
+  subType: string;
+  name: string;
+  signal: string;
+  distance: string;
+  signalStrength: number;
+}
+
+type SignatureStoreEntry = {
+  data: StoredSignatureData;
+  timestamp: number; // Timestamp when this signature was last updated
+};
+
+type KnownSignatureStore = { [id: string]: number | SignatureStoreEntry };
 
 // --- Sorting ---
 type SortKey = "id" | "status" | "type" | "name" | "signal" | "distance";
@@ -56,7 +73,7 @@ const KNOWN_SIGNATURES_KEY = "knownSignatures";
 const FAVOURITED_SIGNATURES_KEY = "favouritedSignatures";
 const IGNORED_SIGNATURES_KEY = "ignoredSignatures";
 const SHOW_ONLY_UNKNOWN_KEY = "showOnlyUnknownFilter";
-const EXPIRATION_DAYS = 3;
+const EXPIRATION_DAYS = 6;
 const EXPIRATION_MS = EXPIRATION_DAYS * 24 * 60 * 60 * 1000;
 
 const sampleData = `IVW-652	Cosmic Signature			0.0%	34.37 AU
@@ -108,7 +125,15 @@ export function SignatureScanner() {
       const parsed: KnownSignatureStore = JSON.parse(storedKnown);
       const fresh: KnownSignatureStore = {};
       for (const id in parsed) {
-        if (now - parsed[id] < EXPIRATION_MS) fresh[id] = parsed[id];
+        if (parsed[id]) {
+          if (typeof parsed[id] === "number") {
+            if (now - parsed[id] < EXPIRATION_MS) fresh[id] = parsed[id];
+          } else if (parsed[id].data && typeof parsed[id].timestamp === 'number') {
+            if (now - parsed[id].timestamp < EXPIRATION_MS) {
+              fresh[id] = parsed[id];
+            }
+          }
+        }
       }
       setKnownSignatures(fresh);
       localStorage.setItem(KNOWN_SIGNATURES_KEY, JSON.stringify(fresh));
@@ -156,24 +181,25 @@ export function SignatureScanner() {
     );
   };
 
-  const handleParse = () => {
+  const handleParse = (keepKnownState: boolean = false) => {
     const now = Date.now();
-    const newKnownSignatures = { ...knownSignatures };
-
+    const existingSigsMap = keepKnownState ? new Map(signatures.map((sig) => [sig.id, sig])) : undefined;
+    // Snapshot of known signatures before this parse operation
+    const knownSignaturesAtParseStart: KnownSignatureStore = JSON.parse(JSON.stringify(knownSignatures)); // Deep copy
+    // This will be the new state for knownSignatures, initialized with current knowns
+    const updatedKnownSignatures: KnownSignatureStore = JSON.parse(JSON.stringify(knownSignatures)); // Deep copy
+    
     const parsedSigs = (inputText ?? "")
       .trim()
       .split("\n")
       .map((line) => {
         const parts = line.split("\t");
         if (parts.length < 6) return null;
-
         const id = parts[0].trim();
         if (!id) return null;
 
-        newKnownSignatures[id] = now;
         const signalStrength = parseFloat(parts[4]) || 0;
-
-        return {
+        const currentParsedData: StoredSignatureData = {
           id,
           type: parts[1].trim(),
           subType: parts[2].trim(),
@@ -181,18 +207,59 @@ export function SignatureScanner() {
           signal: parts[4].trim(),
           distance: parts[5].trim(),
           signalStrength,
-          isKnown: !!knownSignatures[id],
-          isFavourited: favouritedIds.has(id),
-          isIgnored: ignoredIds.has(id),
         };
+
+        let isKnown: boolean;
+        let existingKnownEntry = knownSignaturesAtParseStart[id];
+
+        if (keepKnownState && existingSigsMap && existingSigsMap.size > 0) {
+          const oldSig = existingSigsMap!.get(id);
+          isKnown = oldSig ? oldSig.isKnown : false; // Preserve state, or false if it's a new line item
+        } else {
+          isKnown = !!existingKnownEntry;
+        }
+
+        if (existingKnownEntry && typeof existingKnownEntry === 'object' && existingKnownEntry.data) {
+          // Signature ID was known before this parse
+          if (currentParsedData.signalStrength >= existingKnownEntry.data.signalStrength) {
+            // New scan is same or better, update stored data and timestamp
+            updatedKnownSignatures[id] = { data: currentParsedData, timestamp: now };
+            existingKnownEntry = updatedKnownSignatures[id]; // Update reference for later use
+          } else {
+            // New scan is weaker, keep old data with better signal, just update timestamp
+            updatedKnownSignatures[id] = { ...existingKnownEntry, timestamp: now };
+            existingKnownEntry = updatedKnownSignatures[id]; // Update reference for later use
+          }
+        } else {
+          // New signature ID, add to known signatures
+          updatedKnownSignatures[id] = { data: currentParsedData, timestamp: now };
+          existingKnownEntry = updatedKnownSignatures[id]; // Update reference for later use
+        }
+
+        if (!keepKnownState && isKnown) {
+          return {
+            ...currentParsedData,
+            ...((existingKnownEntry && typeof existingKnownEntry === 'object' && existingKnownEntry.data) ? existingKnownEntry.data : {}),
+            isKnown,
+            isFavourited: favouritedIds.has(id),
+            isIgnored: ignoredIds.has(id),
+          }
+        } else {
+          return {
+            ...currentParsedData,
+            isKnown,
+            isFavourited: favouritedIds.has(id),
+            isIgnored: ignoredIds.has(id),
+          };
+        }
       })
       .filter((sig): sig is Signature => sig !== null);
 
     setSignatures(parsedSigs);
-    setKnownSignatures(newKnownSignatures);
+    setKnownSignatures(updatedKnownSignatures);
     localStorage.setItem(
       KNOWN_SIGNATURES_KEY,
-      JSON.stringify(newKnownSignatures)
+      JSON.stringify(updatedKnownSignatures)
     );
   };
 
@@ -326,8 +393,8 @@ export function SignatureScanner() {
         <CardHeader>
           <CardTitle>EVE Online Signature Scanner</CardTitle>
           <CardDescription>
-            Paste scan results and indicate those that are new, mark favourites, and ignore distractions. Data
-            is saved in your browser.
+            Paste scan results and indicate those that are new, mark favourites, and ignore distractions.<br />Data
+            is saved in your browser. Known signatures expire after {EXPIRATION_DAYS} days.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -340,11 +407,26 @@ export function SignatureScanner() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Button
-                onClick={handleParse}
+                onClick={() => handleParse(false)}
                 disabled={!inputText || inputText === ""}
               >
-                Process Signatures
+                Check Signatures
               </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => handleParse(true)}
+                    variant={"outline"}
+                    disabled={(!inputText || inputText === "") || signatures.length === 0}
+                  >
+                    <span className="sr-only">Refresh</span>
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Refresh Signatures (ignore current known state)
+                </TooltipContent>
+              </Tooltip>
               <Button onClick={handleReset} variant={"outline"}>
                 Delete All
               </Button>
