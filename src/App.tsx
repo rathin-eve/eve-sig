@@ -7,7 +7,7 @@ import { EyeOff, Star, Trash2 } from 'lucide-react'
 function App() {
 
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <div className="p-4 absolute right-2 top-2">
         <ModeToggle />
       </div>
