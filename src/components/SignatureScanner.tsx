@@ -620,7 +620,10 @@ export function SignatureScanner() {
             </li>
           </ol>
         </div>
-      </div>      
+        <div className="mt-6 text-sm text-gray-500 dark:text-gray-400">
+          <p>Raise issues or provide feedback to Rathin in-game</p>
+        </div>
+      </div>
     </TooltipProvider>
   );
 }
