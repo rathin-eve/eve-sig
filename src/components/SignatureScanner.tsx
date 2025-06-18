@@ -103,6 +103,39 @@ const SignalProgressBar = ({ value }: { value: number }) => {
   );
 };
 
+function generateLinkForName(name: string): string | undefined {
+  // Ignore Cosmic Anomalies
+  // Generate a link-friendly version of the name
+  return name.replace(/\s+/g, "_");
+}
+
+const SigName = ({ sig }: { sig: Signature }) => {
+  if (!sig.name || sig.name.trim() === "") {
+    return (
+      <span>-</span>
+    );
+  }
+
+  if (
+    sig.signalStrength < 100 ||
+    // Don't link Wormholes or Faction Warfare sites
+    sig.subType === "Wormhole" ||
+    sig.name.indexOf('ADV-') > -1 || sig.name.indexOf('NVY-') > -1 || sig.name.indexOf('Open Complex') > -1 || sig.name.indexOf('Battlefield') > -1
+  ) {
+    return (
+      <span>
+        {sig.name}
+      </span>
+    );
+  }
+
+  return (
+    <a href={`https://wiki.eveuniversity.org/${generateLinkForName(sig.name)}`} target="_blank" rel="noopener noreferrer" className=" hover:underline">
+      {sig.name || "Unknown"}
+    </a>
+  );
+}
+
 export function SignatureScanner() {
   const [inputText, setInputText] = useState<string>();
   const [signatures, setSignatures] = useState<Signature[]>([]);
@@ -441,7 +474,7 @@ export function SignatureScanner() {
             </div>
           </div>
 
-          <Table>
+          <Table className="text-left">
             <TableHeader>
               <TableRow>
                 <TableHead
@@ -513,7 +546,7 @@ export function SignatureScanner() {
                       )}
                     </TableCell>
                     <TableCell>{sig.subType || sig.type}</TableCell>
-                    <TableCell>{sig.name}</TableCell>
+                    <TableCell><SigName sig={sig} /></TableCell>
                     <TableCell>
                       <SignalProgressBar value={sig.signalStrength} />
                     </TableCell>
